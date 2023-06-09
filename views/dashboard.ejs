@@ -1,0 +1,214 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-lg-3 col-6">
+      <!-- small box -->
+      <div class="small-box bg-info">
+        <div class="inner">
+          <h3 id="pr">0</h3>
+
+          <p>Photoresistor Value</p>
+        </div>
+        <div class="icon">
+          <i class="fas fa-sun"></i>
+        </div>
+      </div>
+    </div>
+    <!-- ./col -->
+    <div class="col-lg-3 col-6">
+      <!-- small box -->
+      <div class="small-box bg-success">
+        <div class="inner">
+          <h3><span id="at">0</span><sup style="font-size: 20px">°C</sup></h3>
+
+          <p>Ambient Temperature</p>
+        </div>
+        <div class="icon">
+          <i class="fas fa-temperature-high"></i>
+        </div>
+      </div>
+    </div>
+    <!-- ./col -->
+    <div class="col-lg-3 col-6">
+      <!-- small box -->
+      <div class="small-box bg-warning">
+        <div class="inner">
+          <h3><span id="ot">0</span><sup style="font-size: 20px">°C</sup></h3>
+
+          <p>Object Temperature</p>
+        </div>
+        <div class="icon">
+          <i class="fas fa-temperature-low"></i>
+        </div>
+      </div>
+    </div>
+    <!-- ./col -->
+    <div class="col-lg-3 col-6">
+      <!-- small box -->
+      <div class="small-box bg-danger">
+        <div class="inner">
+          <h3><span id="uss">0</span><sup style="font-size: 20px">cm</sup></h3>
+
+          <p>Ultrasonic Sensor</p>
+        </div>
+        <div class="icon">
+          <i class="fas fa-ruler-vertical"></i>
+        </div>
+      </div>
+    </div>
+    <!-- ./col -->
+  </div>
+
+  <div class="row">
+    <div class="col-md-6 col-12">
+        <div class="card card-info">
+            <div class="card-header">
+              <h3 class="card-title">MLX90614 Non-contact Infrared Temperature Sensor</h3>
+             
+            </div>
+            <div class="card-body">
+              <div class="chart"><div class="chartjs-size-monitor"><div class="chartjs-size-monitor-expand"><div class=""></div></div><div class="chartjs-size-monitor-shrink"><div class=""></div></div></div>
+                <canvas id="livelinechart" style="min-height: 500px; height: 500px; max-height: 500px; max-width: 100%; display: block;"class="chartjs-render-monitor"></canvas>
+              </div>
+            </div>
+            <!-- /.card-body -->
+          </div>
+    </div>
+    <div class="col-md-6 col-12">
+        <div class="card card-info">
+            <div class="card-header">
+              <h3 class="card-title">Ultrasonic Sensor</h3>
+             
+            </div>
+            <div class="card-body">
+              <div class="chart"><div class="chartjs-size-monitor"><div class="chartjs-size-monitor-expand"><div class=""></div></div><div class="chartjs-size-monitor-shrink"><div class=""></div></div></div>
+                <canvas id="livelinechartultrasonic" style="min-height: 500px; height: 500px; max-height: 500px; max-width: 100%; display: block;" class="chartjs-render-monitor"></canvas>
+              </div>
+            </div>
+            <!-- /.card-body -->
+          </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  var socket = io();
+  // WebSocket event handlers
+  socket.on("connect", function () {
+    console.log("WebSocket connected");
+  });
+
+  socket.on("disconnect", function () {
+    console.log("WebSocket disconnected");
+  });
+  const ctx = document.getElementById("livelinechart");
+  const ctxultrasonic = document.getElementById("livelinechartultrasonic");
+
+//   console.log(getLast30Seconds())
+  const data = {
+    labels: getLast30Seconds(),
+    datasets: [
+      {
+        label: "Ambient Temperature",
+        data: [],
+        borderColor: "rgb(196, 47, 47)",
+        backgroundColor: "rgb(183, 88, 88)",
+      },
+      {
+        label: "Object Temperature",
+        data: [],
+        borderColor: "rgb(18, 15, 197)",
+        backgroundColor: "rgb(80, 65, 215)",
+      },
+    ],
+  };
+  const dataultrasonic = {
+    labels: getLast30Seconds(),
+    datasets: [
+      {
+        label: "Distance in cm",
+        data: [],
+        borderColor: "rgb(11, 159, 38)",
+        backgroundColor: "rgba(11, 119, 68, 0.25)",
+      },
+     
+    ],
+  };
+  const config = {
+    type: "line",
+    data: data,
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: "top",
+        },
+        title: {
+          display: true,
+          text: "Temperature Chart",
+        },
+      },
+    },
+  };
+  const configultrasonic = {
+    type: "line",
+    data: dataultrasonic,
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: "top",
+        },
+        title: {
+          display: true,
+          text: "Ultrasonic Sensor Data",
+        },
+      },
+    },
+  };
+  const livechart = new Chart(ctx, config);
+  const livechartultrasonic = new Chart(ctxultrasonic, configultrasonic);
+
+  // Receive and display chat messages
+  socket.on("datareceived", function (message) {
+    document.getElementById("pr").textContent = message.pr;
+    document.getElementById("at").textContent = message.at.toFixed(2);
+    document.getElementById("ot").textContent = message.ot.toFixed(2);
+    document.getElementById("uss").textContent = message.uss.toFixed(2);
+
+   
+    data.datasets[0].data.push(message.at.toFixed(2));
+
+    if (data.datasets[0].data.length > 24) {
+        data.datasets[0].data.shift();
+    }
+
+    data.datasets[1].data.push(message.ot.toFixed(2));
+
+    if (data.datasets[1].data.length > 24) {
+        data.datasets[1].data.shift();
+    }
+    data.labels = getLast30Seconds();
+    livechart.update();
+
+
+    dataultrasonic.datasets[0].data.push(message.uss.toFixed(2));
+
+    if (dataultrasonic.datasets[0].data.length > 24) {
+        dataultrasonic.datasets[0].data.shift();
+    }
+    dataultrasonic.labels = getLast30Seconds();
+    livechartultrasonic.update();
+  });
+
+  function getLast30Seconds() {
+    var currentTime = new Date(); // Get the current time
+    var last30Seconds = [];
+
+    for (var i = 0; i < 120; i += 5) {
+      var time = new Date(currentTime.getTime() - i * 1000); // Subtract seconds
+      last30Seconds.push(time.toLocaleTimeString()); // Add the time to the array
+    }
+
+    return last30Seconds;
+  }
+</script>

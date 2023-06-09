@@ -1,0 +1,144 @@
+<style>
+  /* Adjust the container height to fit the content */
+  .container {
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .house-container {
+      position: relative;
+      width: 100%;
+    }
+
+    .house-image {
+      width: 100%;
+    }
+
+    .button-container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn {
+      width: 80px;
+      height: 80px;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+</style>
+
+<div class="container-fluid">
+  <div class="house-container">
+    <div class="house-image">
+      <img src="images/pexels-vecislavas-popa-1571459.jpg" alt="House Image" style="max-width: 100%;">
+    </div>
+    <div class="button-container">
+      <button id="bedroom" type="button" class="btn btn-primary btn-lg"><i class="fas fa-bed"> Bedroom Off</i>
+      </button>
+      <button id="livingroom" type="button" class="btn btn-primary btn-lg"><i class="fas fa-chair"> Living Room Off</i>
+      </button>
+      <button id="kitchen" type="button" class="btn btn-primary btn-lg"><i class="fas fa-utensil-spoon"> Kitchen Off</i>
+      </button>
+      <button id="bathroom" type="button" class="btn btn-primary btn-lg"><i class="fas fa-toilet-paper"> Bathroom Off</i>
+      </button>
+    </div>
+    </div>
+  </div>
+</div>
+</div>
+<!-- Latest compiled and minified JavaScript -->
+<script
+  src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+  integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+  crossorigin="anonymous"
+></script>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<script>
+  var socket = io();
+
+  const bedroom = document.getElementById("bedroom");
+  const livingroom = document.getElementById("livingroom");
+  const kitchen = document.getElementById("kitchen");
+  const bathroom = document.getElementById("bathroom");
+
+
+  //bedroom button
+  bedroom.addEventListener("click", () => {
+    if (bedroom.classList.contains("btn-primary")) {
+      bedroom.classList.remove("btn-primary");
+      bedroom.classList.add("btn-success");
+      bedroom.innerHTML = "Bedroom On";
+      socket.emit("bedroomstate", "on");
+      // fetch("http://10.50.27.172/led1/on");
+    } else {
+      bedroom.classList.add("btn-primary");
+      bedroom.classList.remove("btn-success");
+      bedroom.innerHTML = "Bedroom Off";
+      socket.emit("bedroomstate", "off");
+      // fetch("http://10.50.27.172/led1/off");
+    }
+  });
+
+  //livingroom button
+  livingroom.addEventListener("click", () => {
+    if (livingroom.classList.contains("btn-primary")) {
+      livingroom.classList.remove("btn-primary");
+      livingroom.classList.add("btn-success");
+      livingroom.innerHTML = "Living Room On";
+      // fetch("http://10.50.27.172/led2/on");
+      socket.emit("livingroomstate", "on");
+    } else {
+      livingroom.classList.add("btn-primary");
+      livingroom.classList.remove("btn-success");
+      livingroom.innerHTML = "Living Room Off";
+      // fetch("http://10.50.27.172/led2/off");
+      socket.emit("livingroomstate", "off");
+    }
+  });
+
+  //kitchen button
+  kitchen.addEventListener("click", () => {
+    if (kitchen.classList.contains("btn-primary")) {
+      kitchen.classList.remove("btn-primary");
+      kitchen.classList.add("btn-success");
+      kitchen.innerHTML = "Kitchen On";
+      // fetch("http://10.50.27.172/led3/on");
+      socket.emit("kitchenstate", "on");
+    } else {
+      kitchen.classList.add("btn-primary");
+      kitchen.classList.remove("btn-success");
+      kitchen.innerHTML = "Kitchen Off";
+      // fetch("http://10.50.27.172/led3/off");
+      socket.emit("kitchenstate", "off");
+    }
+  });
+
+  //bathroom button
+  bathroom.addEventListener("click", () => {
+    if (bathroom.classList.contains("btn-primary")) {
+      bathroom.classList.remove("btn-primary");
+      bathroom.classList.add("btn-success");
+      bathroom.innerHTML = "Bathroom On";
+      // fetch("http://10.50.27.172/led4/on");
+      socket.emit("bathroomstate", "on");
+    } else {
+      bathroom.classList.add("btn-primary");
+      bathroom.classList.remove("btn-success");
+      bathroom.innerHTML = "Bathroom Off";
+      // fetch("http://10.50.27.172/led4/off");
+      socket.emit("bathroomstate", "off");
+    }
+  });
+
+</script>

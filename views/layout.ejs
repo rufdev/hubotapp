@@ -1,0 +1,25 @@
+<%- include('./partials/header') %> 
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<%- include('./partials/navbar') %> 
+<%- include('./partials/sidebar') %>
+<div class="content-wrapper">
+  <!-- Content Header (Page header) -->
+  <div class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1 class="m-0"><%= title %></h1>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main content -->
+  <section id="content" class="content">
+      <%- body %>
+  </section>
+  <!-- /.content -->
+</div>
+<%- include('./partials/footer.ejs') %> 
+<%- include('./partials/js.ejs') %>

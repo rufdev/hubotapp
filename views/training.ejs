@@ -1,0 +1,142 @@
+    <div class="container-fluid text-center mt-5">
+      <h1>Random Cat or Dog Images</h1>
+      <div class="row">
+        <div class="col-md-12">
+          <div
+            class="spinner-border text-primary d-none"
+            role="status"
+            id="loading-indicator"
+          >
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <img
+            id="animalImage"
+            class="img-fluid img-thumbnail d-none"
+            alt="Random image"
+          />
+        </div>
+      </div>
+      <button id="randomBtn" class="btn btn-lg btn-primary mt-3">
+        Get New Images
+      </button>
+      <hr />
+
+      <button id="catBtn" type="button" class="btn btn-lg btn-primary d-none">
+        Cat
+      </button>
+      <button id="dogBtn" type="button" class="btn btn-lg btn-primary d-none">
+        Dog
+      </button>
+    </div>
+    <!-- <p>Welcome to <%= title %></p> -->
+    <!-- <img
+      style="
+        display: block;
+        -webkit-user-select: none;
+        margin: auto;
+        background-color: hsl(0, 0%, 25%);
+      "
+      src="http://10.50.27.143:81/stream"
+    /> -->
+
+    <!-- Latest compiled and minified JavaScript -->
+
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script>
+      const randomBtn = document.getElementById("randomBtn");
+      const animalImage = document.getElementById("animalImage");
+      const catBtn = document.getElementById("catBtn");
+      const dogBtn = document.getElementById("dogBtn");
+      const loadingIndicator = document.getElementById("loading-indicator");
+      let id = null;
+      randomBtn.addEventListener("click", async () => {
+        try {
+          loadingIndicator.classList.remove("d-none");
+          animalImage.classList.add("d-none");
+          const animal = Math.random() < 0.5 ? "cat" : "dog";
+          let url = null;
+          if (animal === "cat") {
+            url =
+              "https://api.thecatapi.com/v1/images/search?size=tumb&mime_types=jpg";
+          } else {
+            url =
+              "https://api.thedogapi.com/v1/images/search?size=tumb&mime_types=jpg";
+          }
+          const imageresponse = await axios(url);
+          const data = await imageresponse.data;
+          animalImage.src = data[0].url;
+          id = data[0].id;
+          animalImage.onload = () => {
+            loadingIndicator.classList.add("d-none");
+            animalImage.classList.remove("d-none");
+            catBtn.classList.remove("d-none");
+            dogBtn.classList.remove("d-none");
+
+            catBtn.classList.remove("btn-success");
+            dogBtn.classList.remove("btn-danger");
+            catBtn.classList.remove("btn-primary");
+            dogBtn.classList.remove("btn-primary");
+            catBtn.classList.add("btn-primary");
+            dogBtn.classList.add("btn-primary");
+          };
+        } catch (error) {
+          console.error(error);
+        }
+      });
+
+      catBtn.addEventListener("click", () => {
+        catBtn.classList.remove("btn-primary");
+        catBtn.classList.add("btn-success");
+
+        // Save the tagged image to the database
+        axios({
+          method: "post",
+          url: "/tag",
+          data: {
+            url: animalImage.src,
+            tag: "cat",
+            id: id,
+          },
+        })
+          .then((response) => {
+            console.log(response);
+            if (response.status === 200) {
+              alert(`Tagged image as cat`);
+            } else {
+              alert("Failed to save tag");
+            }
+          })
+          .catch((err) => {
+            console.error(err);
+            alert("Failed to save tag");
+          });
+      });
+
+      dogBtn.addEventListener("click", () => {
+        dogBtn.classList.remove("btn-primary");
+        dogBtn.classList.add("btn-danger");
+
+        // Save the tagged image to the database
+        axios({
+          method: "post",
+          url: "/tag",
+          data: {
+            url: animalImage.src,
+            tag: "dog",
+            id: id,
+          },
+        })
+          .then((response) => {
+            console.log(response);
+            if (response.status === 200) {
+              alert(`Tagged image as dog`);
+            } else {
+              alert("Failed to save tag");
+            }
+          })
+          .catch((err) => {
+            console.error(err);
+            alert("Failed to save tag");
+          });
+      });
+    </script>

@@ -1,0 +1,134 @@
+<style>
+  img {
+    display: block;
+  }
+  .camView {
+    position: relative;
+    float: left;
+    width: calc(100% - 20px);
+    margin: 10px;
+    cursor: pointer;
+  }
+  .camView p {
+    position: absolute;
+    padding: 5px;
+    background-color: rgba(0, 255, 42, 0.85);
+    color: #fff;
+    border: 1px dashed rgba(255, 255, 255, 0.7);
+    z-index: 2;
+    font-size: 12px;
+  }
+  .highlighter {
+    background: rgba(0, 255, 0, 0.25);
+    border: 1px dashed #fff;
+    z-index: 1;
+    position: absolute;
+    left: 0;
+    top: 0;
+  }
+</style>
+
+<div class="container-fluid text-center mt-5">
+  <h1>ESP32-CAM Stream</h1>
+  <div class="row">
+    <div class="col-md-12">
+      <section id="camSection">
+        <div id="liveView" class="camView">
+          <img
+            id="esp32cam_video"
+            class="img-fluid img-thumbnail"
+            width="640"
+            height="480"
+            crossorigin=" "
+          />
+        </div>
+        <button id="esp32camButton" class="btn btn-primary">
+          Start ESP32Cam Stream
+        </button>
+      </section>
+    </div>
+  </div>
+  <hr />
+</div>
+
+<!-- Latest compiled and minified JavaScript -->
+<script
+  src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs/dist/tf.min.js"
+  type="text/javascript"
+></script>
+<!-- Load the coco-ssd model to use to recognize things in images -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
+<script>
+  const esp32camip = "<%= esp32camip %>";
+  const esp32stream = `http://${esp32camip}:81/stream`;
+  const video = document.getElementById("esp32cam_video");
+  const liveView = document.getElementById("liveView");
+  const camSection = document.getElementById("camSection");
+  const enableWebcamButton = document.getElementById("esp32camButton");
+  esp32camButton.addEventListener("click", enableCam);
+  // Store the resulting model in the global scope of our app.
+  var model = undefined;
+  // esp32camButton.disabled = true;
+  cocoSsd.load().then(function (loadedModel) {
+    model = loadedModel;
+    esp32camButton.disabled = false;
+  });
+  function enableCam(event) {
+    video.src = esp32stream;
+    if (!model) {
+      return;
+    }
+    predictWebcam();
+  }
+  var children = [];
+  function predictWebcam() {
+    // Now let's start classifying a frame in the stream.
+    video.crossorigin = " ";
+    model.detect(video).then(function (predictions) {
+      // Remove any highlighting we did previous frame.
+      for (let i = 0; i < children.length; i++) {
+        liveView.removeChild(children[i]);
+      }
+      children.splice(0);
+      // Now lets loop through predictions and draw them to the live view if
+      // they have a high confidence score.
+      for (let n = 0; n < predictions.length; n++) {
+        console.log(predictions[n].class + " " + predictions[n].score);
+        if (predictions[n].score > 0.55) {
+          const p = document.createElement("p");
+          p.innerText =
+            predictions[n].class +
+            " - with " +
+            Math.round(parseFloat(predictions[n].score) * 100) +
+            "% confidence.";
+          p.style =
+            "margin-left: " +
+            predictions[n].bbox[0] +
+            "px; margin-top: " +
+            (predictions[n].bbox[1] - 10) +
+            "px; width: " +
+            (predictions[n].bbox[2] - 10) +
+            "px; top: 0; left: 0;";
+          const highlighter = document.createElement("div");
+          highlighter.setAttribute("class", "highlighter");
+          highlighter.style =
+            "left: " +
+            predictions[n].bbox[0] +
+            "px; top: " +
+            predictions[n].bbox[1] +
+            "px; width: " +
+            predictions[n].bbox[2] +
+            "px; height: " +
+            predictions[n].bbox[3] +
+            "px;";
+          liveView.appendChild(highlighter);
+          liveView.appendChild(p);
+          children.push(highlighter);
+          children.push(p);
+        }
+      }
+      // Call this function again to keep predicting when the browser is ready.
+      window.requestAnimationFrame(predictWebcam);
+    });
+  }
+</script>

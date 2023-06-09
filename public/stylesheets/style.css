@@ -1,0 +1,27 @@
+body {
+  padding: 50px;
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+}
+
+a {
+  color: #00B7FF;
+}
+
+.jumbotron {
+  background: linear-gradient(to bottom, #87ceeb, #4169e1);
+  color: white;
+}
+
+.jumbotron h1,
+.jumbotron p {
+  text-shadow: 1px 1px #333;
+}
+.container {
+  max-width: 800px;
+}
+
+img {
+  margin-bottom: 10px;
+  border: 5px solid white;
+  border-radius: 10px;
+}
