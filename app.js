@@ -23,20 +23,18 @@ const expressLayouts = require("express-ejs-layouts");
 
 const { env } = require("process");
 
-
 var app = express();
 var corsOptions = {
   origin: "*",
 };
 
-
 app.use(cors(corsOptions));
 app.use(express.json({ limit: "50mb" }));
-app.use(express.static('public'));
+app.use(express.static("public"));
 
-const http = require('http').Server(app);
-const io = require('socket.io')(http);
-const socketio = require('./socketio'); // Import your socketio.js module
+const http = require("http").Server(app);
+const io = require("socket.io")(http);
+const socketio = require("./socketio"); // Import your socketio.js module
 socketio(io); // Initialize your socketio module
 
 const db = new sqlite3.Database("images.db");
@@ -59,9 +57,15 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
+//tfjs_model_bottles_best_model/model.json
+
 app.use(
   "/adminlte",
   express.static(path.join(__dirname, "/node_modules/admin-lte"))
+);
+app.use(
+  "/tfjs_model_bottles_best_model",
+  express.static(path.join(__dirname, "/tfjs_model_bottles_best_model"))
 );
 
 app.get("/", (req, res) => {
@@ -93,13 +97,20 @@ app.get("/esp32cam", (req, res) => {
 
 app.get("/mobilecamera", (req, res) => {
   res.render("mobilecamera", {
-    title: "Builtin Camera"
+    title: "Builtin Camera",
   });
 });
 
 app.get("/tfobjectdetect", (req, res) => {
   res.render("tfobjectdetect", {
     title: "Object Detection using ESP32CAM",
+    esp32camip: process.env.ESP32CAMIP,
+  });
+});
+
+app.get("/bottleclassification", async (req, res) => {
+  res.render("bottleclassification", {
+    title: "Bottle Classification",
     esp32camip: process.env.ESP32CAMIP,
   });
 });
@@ -171,7 +182,7 @@ app.post("/predictmobilecam", async (req, res) => {
 
     // Convert base64-encoded image data to Uint8Array
     const data = Buffer.from(base64Data, "base64");
-    
+
     const model = await tf.loadLayersModel("file://tfjs_model2/model.json");
     // const imageBuffer = await sharp(req.body).resize(224).toBuffer();
 
@@ -201,14 +212,14 @@ app.get("/predict-esp32cam", async (req, res) => {
     });
     if (response) {
       const originalimageBuffer = await sharp(response.data).toBuffer();
-      const originalbase64 = await Buffer.from(originalimageBuffer).toString("base64");
+      const originalbase64 = await Buffer.from(originalimageBuffer).toString(
+        "base64"
+      );
       const src = `data:image/jpeg;base64,${originalbase64}`;
 
-      
       const model = await tf.loadLayersModel("file://tfjs_model2/model.json");
       const imageBuffer = await sharp(response.data).resize(224).toBuffer();
       const base64 = await Buffer.from(imageBuffer).toString("base64");
-      
 
       const image = tf.node.decodeImage(imageBuffer);
       const resizedImage = tf.image.resizeBilinear(image, [224, 224]);
@@ -216,6 +227,48 @@ app.get("/predict-esp32cam", async (req, res) => {
       const batched = normalized.expandDims(0);
       const prediction = model.predict(batched).arraySync();
       console.log(prediction);
+      res.json({ url: src, prediction: prediction[0] });
+    }
+  } catch (error) {
+    console.error(error);
+    res.sendStatus(500);
+  }
+});
+
+app.get("/predict-bottleclassification", async (req, res) => {
+  try {
+    const esp32camip = process.env.ESP32CAMIP;
+    const response = await axios({
+      method: "GET",
+      url: `http://${esp32camip}/capture?_cb=${Date.now()}`,
+      responseType: "arraybuffer",
+    });
+    if (response) {
+      const originalimageBuffer = await sharp(response.data).toBuffer();
+      const originalbase64 = await Buffer.from(originalimageBuffer).toString(
+        "base64"
+      );
+      const src = `data:image/jpeg;base64,${originalbase64}`;
+
+      const model = await tf.loadLayersModel(
+        "file://tfjs_model_bottles_best_model/model.json"
+      );
+      // Resize the image to match the model's expected input shape of 220x220 pixels
+      const imageBuffer = await sharp(response.data)
+        .resize(220, 220)
+        .toBuffer();
+      const base64 = await Buffer.from(imageBuffer).toString("base64");
+
+      // Decode and preprocess the image
+      const image = tf.node.decodeImage(imageBuffer);
+      const resizedImage = tf.image.resizeBilinear(image, [220, 220]); // Adjusted to 220x220
+      const normalized = resizedImage.div(255.0);
+      const batched = normalized.expandDims(0);
+
+      // Make a prediction
+      const prediction = model.predict(batched).arraySync();
+
+      // Respond with the prediction and the image URL
       res.json({ url: src, prediction: prediction[0] });
     }
   } catch (error) {
@@ -257,7 +310,6 @@ app.use(function (err, req, res, next) {
   res.status(err.status || 500);
   res.render("error");
 });
-
 
 // Set the port number
 const port = 3000;
