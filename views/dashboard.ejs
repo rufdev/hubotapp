@@ -1,6 +1,12 @@
 <div class="container-fluid">
+  <!-- <div class="row">
+    <div class="col-lg-2 col-6">
+      <div id="map" class="map"></div>
+      <div id="info"></div>
+    </div>
+  </div> -->
   <div class="row">
-    <div class="col-lg-3 col-6">
+    <div class="col-lg-2 col-6">
       <!-- small box -->
       <div class="small-box bg-info">
         <div class="inner">
@@ -14,21 +20,20 @@
       </div>
     </div>
     <!-- ./col -->
-    <div class="col-lg-3 col-6">
+    <div class="col-lg-2 col-6">
       <!-- small box -->
       <div class="small-box bg-success">
         <div class="inner">
           <h3><span id="at">0</span><sup style="font-size: 20px">°C</sup></h3>
 
-          <p>Ambient Temperature</p>
+          <p>Ambient Temp</p>
         </div>
         <div class="icon">
           <i class="fas fa-temperature-high"></i>
         </div>
       </div>
     </div>
-    <!-- ./col -->
-    <div class="col-lg-3 col-6">
+    <div class="col-lg-2 col-6">
       <!-- small box -->
       <div class="small-box bg-warning">
         <div class="inner">
@@ -37,14 +42,44 @@
           <p>Object Temperature</p>
         </div>
         <div class="icon">
-          <i class="fas fa-temperature-low"></i>
+          <i class="fas fa-mug-hot"></i>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-2 col-6">
+      <!-- small box -->
+      <div class="small-box bg-indigo">
+        <div class="inner">
+          <h3><span id="humi">0</span><sup style="font-size: 20px">°C</sup></h3>
+
+          <p>Humidity</p>
+        </div>
+        <div class="icon">
+          <i class="fas fa-fan"></i>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-2 col-6">
+      <!-- small box -->
+      <div class="small-box bg-lime">
+        <div class="inner">
+          <h3>
+            <span id="tempC">0</span><sup style="font-size: 20px">°C</sup>
+          </h3>
+
+          <p>DHT Temp C</p>
+        </div>
+        <div class="icon">
+          <i class="fas fa-temperature-high"></i>
         </div>
       </div>
     </div>
     <!-- ./col -->
-    <div class="col-lg-3 col-6">
+
+    <!-- ./col -->
+    <div class="col-lg-2 col-6">
       <!-- small box -->
-      <div class="small-box bg-danger">
+      <div class="small-box bg-blue">
         <div class="inner">
           <h3><span id="uss">0</span><sup style="font-size: 20px">cm</sup></h3>
 
@@ -60,32 +95,68 @@
 
   <div class="row">
     <div class="col-md-6 col-12">
-        <div class="card card-info">
-            <div class="card-header">
-              <h3 class="card-title">MLX90614 Non-contact Infrared Temperature Sensor</h3>
-             
-            </div>
-            <div class="card-body">
-              <div class="chart"><div class="chartjs-size-monitor"><div class="chartjs-size-monitor-expand"><div class=""></div></div><div class="chartjs-size-monitor-shrink"><div class=""></div></div></div>
-                <canvas id="livelinechart" style="min-height: 500px; height: 500px; max-height: 500px; max-width: 100%; display: block;"class="chartjs-render-monitor"></canvas>
+      <div class="card card-info">
+        <div class="card-header">
+          <h3 class="card-title">
+            MLX90614 Non-contact Infrared Temperature Sensor
+          </h3>
+        </div>
+        <div class="card-body">
+          <div class="chart">
+            <div class="chartjs-size-monitor">
+              <div class="chartjs-size-monitor-expand">
+                <div class=""></div>
+              </div>
+              <div class="chartjs-size-monitor-shrink">
+                <div class=""></div>
               </div>
             </div>
-            <!-- /.card-body -->
+            <canvas
+              id="livelinechart"
+              style="
+                min-height: 500px;
+                height: 500px;
+                max-height: 500px;
+                max-width: 100%;
+                display: block;
+              "
+              class="chartjs-render-monitor"
+            ></canvas>
           </div>
+        </div>
+        <!-- /.card-body -->
+      </div>
     </div>
     <div class="col-md-6 col-12">
-        <div class="card card-info">
-            <div class="card-header">
-              <h3 class="card-title">Ultrasonic Sensor</h3>
-             
-            </div>
-            <div class="card-body">
-              <div class="chart"><div class="chartjs-size-monitor"><div class="chartjs-size-monitor-expand"><div class=""></div></div><div class="chartjs-size-monitor-shrink"><div class=""></div></div></div>
-                <canvas id="livelinechartultrasonic" style="min-height: 500px; height: 500px; max-height: 500px; max-width: 100%; display: block;" class="chartjs-render-monitor"></canvas>
+      <div class="card card-info">
+        <div class="card-header">
+          <h3 class="card-title">Ultrasonic Sensor</h3>
+        </div>
+        <div class="card-body">
+          <div class="chart">
+            <div class="chartjs-size-monitor">
+              <div class="chartjs-size-monitor-expand">
+                <div class=""></div>
+              </div>
+              <div class="chartjs-size-monitor-shrink">
+                <div class=""></div>
               </div>
             </div>
-            <!-- /.card-body -->
+            <canvas
+              id="livelinechartultrasonic"
+              style="
+                min-height: 500px;
+                height: 500px;
+                max-height: 500px;
+                max-width: 100%;
+                display: block;
+              "
+              class="chartjs-render-monitor"
+            ></canvas>
           </div>
+        </div>
+        <!-- /.card-body -->
+      </div>
     </div>
   </div>
 </div>
@@ -93,9 +164,11 @@
 <script>
   var socket = io();
   // WebSocket event handlers
-  socket.on("connect", function () {
-    console.log("WebSocket connected");
-  });
+  // socket.on("connect", function () {
+  //   console.log("WebSocket connected");
+  // });
+
+  const esp32 = "<%= esp32 %>";
 
   socket.on("disconnect", function () {
     console.log("WebSocket disconnected");
@@ -103,21 +176,33 @@
   const ctx = document.getElementById("livelinechart");
   const ctxultrasonic = document.getElementById("livelinechartultrasonic");
 
-//   console.log(getLast30Seconds())
+  //   console.log(getLast30Seconds())
   const data = {
     labels: getLast30Seconds(),
     datasets: [
       {
         label: "Ambient Temperature",
         data: [],
-        borderColor: "rgb(196, 47, 47)",
-        backgroundColor: "rgb(183, 88, 88)",
+        borderColor: "rgb(144, 238, 144)",
+        backgroundColor: "rgb(60, 179, 113)",
       },
       {
         label: "Object Temperature",
         data: [],
-        borderColor: "rgb(18, 15, 197)",
-        backgroundColor: "rgb(80, 65, 215)",
+        borderColor: "rgb(255, 255, 153)",
+        backgroundColor: "rgb(255, 204, 0)",
+      },
+      {
+        label: "Humidity",
+        data: [],
+        borderColor: "rgb(197, 202, 233)",
+        backgroundColor: "rgb(92, 107, 192)",
+      },
+      {
+        label: "Temp C",
+        data: [],
+        borderColor: "rgb(204, 255, 204)",
+        backgroundColor: "rgb(0, 255, 0)",
       },
     ],
   };
@@ -127,10 +212,9 @@
       {
         label: "Distance in cm",
         data: [],
-        borderColor: "rgb(11, 159, 38)",
-        backgroundColor: "rgba(11, 119, 68, 0.25)",
+        borderColor: "rgb(173, 216, 230)",
+        backgroundColor: "rgb(0, 191, 255)",
       },
-     
     ],
   };
   const config = {
@@ -174,27 +258,48 @@
     document.getElementById("at").textContent = message.at.toFixed(2);
     document.getElementById("ot").textContent = message.ot.toFixed(2);
     document.getElementById("uss").textContent = message.uss.toFixed(2);
+    document.getElementById("humi").textContent = message.humi.toFixed(2);
+    document.getElementById("tempC").textContent = message.tempC.toFixed(2);
 
-   
+    if (message.uss.toFixed(2) <= 5) {
+      document.getElementById("uss").style.color = "red";
+      //turn on buzzer
+      fetch(`http://${esp32}/buzz/on`);
+    } else {
+      document.getElementById("uss").style.color = "white";
+    }
+
     data.datasets[0].data.push(message.at.toFixed(2));
 
     if (data.datasets[0].data.length > 24) {
-        data.datasets[0].data.shift();
+      data.datasets[0].data.shift();
     }
 
     data.datasets[1].data.push(message.ot.toFixed(2));
 
     if (data.datasets[1].data.length > 24) {
-        data.datasets[1].data.shift();
+      data.datasets[1].data.shift();
     }
+
+    data.datasets[2].data.push(message.humi.toFixed(2));
+
+    if (data.datasets[2].data.length > 24) {
+      data.datasets[2].data.shift();
+    }
+
+    data.datasets[3].data.push(message.tempC.toFixed(2));
+
+    if (data.datasets[3].data.length > 24) {
+      data.datasets[3].data.shift();
+    }
+
     data.labels = getLast30Seconds();
     livechart.update();
-
 
     dataultrasonic.datasets[0].data.push(message.uss.toFixed(2));
 
     if (dataultrasonic.datasets[0].data.length > 24) {
-        dataultrasonic.datasets[0].data.shift();
+      dataultrasonic.datasets[0].data.shift();
     }
     dataultrasonic.labels = getLast30Seconds();
     livechartultrasonic.update();
@@ -211,4 +316,9 @@
 
     return last30Seconds;
   }
+
+
+
+ 
 </script>
+

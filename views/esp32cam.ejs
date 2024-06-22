@@ -46,11 +46,11 @@
     </div>
   </div>
   <div class="row">
-    <div class="col-md-12 mx-auto">
+    <!-- <div class="col-md-12 mx-auto">
       <video id="videoElement" width="640" height="480" class="mx-auto"></video>
       <br />
       <button id="captureButton">Capture</button>
-    </div>
+    </div> -->
   </div>
 </div>
 
@@ -107,73 +107,4 @@
     resetBtn.classList.add("d-none");
   });
 
-  const videoElement = document.getElementById("videoElement");
-  const captureButton = document.getElementById("captureButton");
-  if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-    // Constraints to specify the camera facing mode
-    const constraints = { video: { facingMode: "environment" } };
-    // Access the user's media devices and get the camera stream
-    navigator.mediaDevices
-      .getUserMedia(constraints)
-      .then((stream) => {
-        // Create a video element to display the camera stream
-        videoElement.srcObject = stream;
-        videoElement.play();
-
-        // Append the video element to the DOM or perform any other desired operations
-        document.body.appendChild(video);
-      })
-      .catch((error) => {
-        console.error("Error accessing camera:", error);
-      });
-  } else {
-    navigator.mediaDevices
-      .getUserMedia({ video: true })
-      .then((stream) => {
-        videoElement.srcObject = stream;
-        videoElement.play();
-      })
-      .catch((error) => {
-        console.error("Error accessing camera:", error);
-      });
-  }
-
-  captureButton.addEventListener("click", () => {
-    const canvas = document.createElement("canvas");
-    const context = canvas.getContext("2d");
-
-    canvas.width = videoElement.videoWidth;
-    canvas.height = videoElement.videoHeight;
-
-    context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-
-    const imageDataURL = canvas.toDataURL("image/jpeg");
-
-    axios
-      .post("/predictmobilecam", { image: imageDataURL })
-      .then((response) => {
-        // Handle the response from the server
-        stream.src = response.data.url;
-        const prediction = response.data.prediction;
-        const predictioncat = prediction[0];
-        const predictiondog = prediction[1];
-
-        stream.onload = () => {
-          predictiondisplay.classList.remove("d-none");
-          resetBtn.classList.remove("d-none");
-
-          const predictionValue = Math.max(predictioncat, predictiondog);
-
-          progressBarcat.style.width = `${predictioncat * 100}%`;
-          progressBardog.style.width = `${predictiondog * 100}%`;
-          const iscat = predictioncat > predictiondog;
-          predictionText.textContent = `This image has a ${Math.round(
-            predictionValue * 100
-          )}% chance of being a ${iscat ? "cat" : "dog"}.`;
-        };
-      })
-      .catch((error) => {
-        console.error("Error sending image to server:", error);
-      });
-  });
 </script>

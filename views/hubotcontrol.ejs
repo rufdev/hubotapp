@@ -1,0 +1,394 @@
+<style>
+  img {
+    display: block;
+  }
+  .camView {
+    position: relative;
+    float: left;
+    width: calc(100% - 20px);
+    margin: 10px;
+    cursor: pointer;
+  }
+  .camView p {
+    position: absolute;
+    padding: 5px;
+    background-color: rgba(0, 255, 42, 0.85);
+    color: #fff;
+    border: 1px dashed rgba(255, 255, 255, 0.7);
+    z-index: 2;
+    font-size: 12px;
+  }
+  .highlighter {
+    background: rgba(0, 255, 0, 0.25);
+    border: 1px dashed #fff;
+    z-index: 1;
+    position: absolute;
+    left: 0;
+    top: 0;
+  }
+  .direction-button {
+    border: 1px solid #000;
+    background-color: #444;
+    padding: 10px;
+    color: #fff;
+    font-size: 24px;
+    text-align: center;
+    cursor: pointer;
+  }
+
+  .up-button {
+    margin-bottom: 10px;
+  }
+
+  .left-button {
+    margin-right: 10px;
+  }
+
+  .right-button {
+    margin-left: 10px;
+  }
+
+  .table-borderless td,
+  .table-borderless th {
+    border: none;
+  }
+  .form-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background-color: #007bff;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+  }
+
+  .form-range::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    background-color: #007bff;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+  }
+</style>
+
+<div class="container-fluid text-center mt-5">
+  <h1>ESP32-CAM Stream</h1>
+  <div class="row">
+    <div class="col-md-12">
+      <section id="camSection">
+        <div id="liveView" class="camView">
+          <img
+            id="esp32cam_video"
+            class="img-fluid img-thumbnail"
+            width="640"
+            height="480"
+            crossorigin=" "
+          />
+        </div>
+      </section>
+    </div>
+    <div class="col-md-12">
+      <table class="table table-striped table-hover table-sm table-borderless">
+        <tbody>
+          <tr>
+            <td></td>
+            <td id="up" class="direction-button up-button">
+              <i class="fas fa-arrow-up"></i>
+            </td>
+            <td></td>
+          </tr>
+          <tr>
+            <td id="left" class="direction-button left-button">
+              <i class="fas fa-arrow-left"></i>
+            </td>
+            <td></td>
+            <td id="right" class="direction-button right-button">
+              <i class="fas fa-arrow-right"></i>
+            </td>
+          </tr>
+          <tr>
+            <td></td>
+            <td id="down" class="direction-button down-button">
+              <i class="fas fa-arrow-down"></i>
+            </td>
+            <td></td>
+          </tr>
+          <tr>
+            <td>Speed:</td>
+            <td colspan="2">
+              <input
+                type="range"
+                class="form-range"
+                min="0"
+                max="255"
+                value="150"
+                id="speedSlider"
+              />
+            </td>
+          </tr>
+          <tr>
+            <td>Light:</td>
+            <td colspan="2">
+              <input
+                type="range"
+                class="form-range"
+                min="0"
+                max="255"
+                value="0"
+                id="lightSlider"
+              />
+            </td>
+          </tr>
+          <tr>
+            <td>Tilt:</td>
+            <td colspan="2">
+              <input
+                type="range"
+                class="form-range"
+                min="0"
+                max="180"
+                value="90"
+                id="tiltSlider"
+              />
+            </td>
+          </tr>
+          <tr>
+            <td>Pan:</td>
+            <td colspan="2">
+              <input
+                type="range"
+                class="form-range"
+                min="0"
+                max="180"
+                value="90"
+                id="panSlider"
+              />
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <hr />
+</div>
+
+<!-- Latest compiled and minified JavaScript -->
+<script
+  src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs/dist/tf.min.js"
+  type="text/javascript"
+></script>
+<!-- Load the coco-ssd model to use to recognize things in images -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
+<script>
+  var socket = io();
+
+  socket.on("connect", function () {
+    socket.emit("join", "car");
+    // socket.emit("tilt", 150);
+  });
+
+  const esp32camip = "<%= esp32camip %>";
+  const esp32stream = `http://${esp32camip}:81/stream`;
+  const video = document.getElementById("esp32cam_video");
+  const liveView = document.getElementById("liveView");
+  const camSection = document.getElementById("camSection");
+
+  const speedSlider = document.getElementById("speedSlider");
+  const lightSlider = document.getElementById("lightSlider");
+  const tiltSlider = document.getElementById("tiltSlider");
+  const panSlider = document.getElementById("panSlider");
+  const up = document.getElementById("up");
+  const down = document.getElementById("down");
+  const left = document.getElementById("left");
+  const right = document.getElementById("right");
+
+  //   const enableWebcamButton = document.getElementById("esp32camButton");
+  //   esp32camButton.addEventListener("click", enableCam);
+  // Store the resulting model in the global scope of our app.
+  var model = undefined;
+  // esp32camButton.disabled = true;
+  cocoSsd.load().then(function (loadedModel) {
+    model = loadedModel;
+    video.src = esp32stream;
+    predictWebcam();
+    socket.emit("speed", speedSlider.value);
+    socket.emit("light", lightSlider.value);
+    socket.emit("tilt", tiltSlider.value);
+    socket.emit("pan", panSlider.value);
+    socket.emit("move", 0);
+    //   esp32camButton.disabled = false;
+  });
+
+  //   function enableCam(event) {
+  //     video.src = esp32stream;
+  //     if (!model) {
+  //       return;
+  //     }
+  //     predictWebcam();
+  //   }
+  var children = [];
+  function predictWebcam() {
+    // Now let's start classifying a frame in the stream.
+    video.crossorigin = " ";
+    model.detect(video).then(function (predictions) {
+      // Remove any highlighting we did previous frame.
+      for (let i = 0; i < children.length; i++) {
+        liveView.removeChild(children[i]);
+      }
+      children.splice(0);
+      // Now lets loop through predictions and draw them to the live view if
+      // they have a high confidence score.
+      for (let n = 0; n < predictions.length; n++) {
+        // console.log(predictions[n].class + " " + predictions[n].score);
+        if (predictions[n].score > 0.55) {
+          const p = document.createElement("p");
+          p.innerText =
+            predictions[n].class +
+            " - with " +
+            Math.round(parseFloat(predictions[n].score) * 100) +
+            "% confidence.";
+          p.style =
+            "margin-left: " +
+            predictions[n].bbox[0] +
+            "px; margin-top: " +
+            (predictions[n].bbox[1] - 10) +
+            "px; width: " +
+            (predictions[n].bbox[2] - 10) +
+            "px; top: 0; left: 0;";
+          const highlighter = document.createElement("div");
+          highlighter.setAttribute("class", "highlighter");
+          highlighter.style =
+            "left: " +
+            predictions[n].bbox[0] +
+            "px; top: " +
+            predictions[n].bbox[1] +
+            "px; width: " +
+            predictions[n].bbox[2] +
+            "px; height: " +
+            predictions[n].bbox[3] +
+            "px;";
+          liveView.appendChild(highlighter);
+          liveView.appendChild(p);
+          children.push(highlighter);
+          children.push(p);
+        }
+      }
+      // Call this function again to keep predicting when the browser is ready.
+      window.requestAnimationFrame(predictWebcam);
+    });
+  }
+
+  //send initial values of sliders to ESP32
+
+  // Listen for the input event on the speedSlider
+  speedSlider.addEventListener("input", () => {
+    // Update the speed value
+    const speedValue = speedSlider.value;
+    console.log(`Speed: ${speedValue}`);
+    socket.emit("speed", speedValue);
+  });
+
+  // Listen for the input event on the lightSlider
+  lightSlider.addEventListener("input", () => {
+    // Update the light value
+    const lightValue = lightSlider.value;
+    console.log(`Light: ${lightValue}`);
+    socket.emit("light", lightValue);
+  });
+
+  // Listen for the input event on the tiltSlider
+  tiltSlider.addEventListener("input", () => {
+    // Update the tilt value
+    const tiltValue = tiltSlider.value;
+    console.log(`Tilt: ${tiltValue}`);
+    socket.emit("tilt", tiltValue);
+  });
+
+  // Listen for the input event on the panSlider
+  panSlider.addEventListener("input", () => {
+    // Update the pan value
+    const panValue = panSlider.value;
+    console.log(`Pan: ${panValue}`);
+    socket.emit("pan", panValue);
+  });
+
+  //   let moveTimer;
+
+  // Listen for the click event on the up button
+  up.addEventListener("touchstart", () => {
+    socket.emit("move", 1);
+  });
+
+  // Listen for the touchend event on the up button
+  up.addEventListener("touchend", () => {
+    socket.emit("move", 0);
+  });
+
+  // Listen for the click event on the down button
+  down.addEventListener("touchstart", () => {
+    socket.emit("move", 2);
+  });
+
+  // Listen for the touchend event on the down button
+  down.addEventListener("touchend", () => {
+    socket.emit("move", 0);
+  });
+
+  // Listen for the click event on the left button
+  left.addEventListener("touchstart", () => {
+    socket.emit("move", 3);
+  });
+
+  // Listen for the touchend event on the left button
+  left.addEventListener("touchend", () => {
+    socket.emit("move", 0);
+  });
+
+  // Listen for the click event on the right button
+  right.addEventListener("touchstart", () => {
+    socket.emit("move", 4);
+  });
+
+  // Listen for the touchend event on the right button
+  right.addEventListener("touchend", () => {
+    socket.emit("move", 0);
+  });
+
+  up.addEventListener("mousedown", () => {
+    socket.emit("move", 1);
+  });
+
+  // Listen for the touchend event on the up button
+  up.addEventListener("mouseup", () => {
+    socket.emit("move", 0);
+  });
+
+  down.addEventListener("mousedown", () => {
+    socket.emit("move", 2);
+  });
+
+  // Listen for the touchend event on the down button
+  down.addEventListener("mouseup", () => {
+    socket.emit("move", 0);
+  });
+
+  left.addEventListener("mousedown", () => {
+    socket.emit("move", 3);
+  });
+
+  // Listen for the touchend event on the left button
+  left.addEventListener("mouseup", () => {
+    socket.emit("move", 0);
+  });
+
+  right.addEventListener("mousedown", () => {
+    socket.emit("move", 4);
+  });
+
+  // Listen for the touchend event on the right button
+  right.addEventListener("mouseup", () => {
+    socket.emit("move", 0);
+  });
+</script>

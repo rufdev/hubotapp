@@ -9,24 +9,35 @@ const tf = require("@tensorflow/tfjs-node");
 const fs = require("fs");
 const axios = require("axios");
 const axiosRetry = require("axios-retry");
-var indexRouter = require("./routes/index");
-var predictRouter = require("./routes/predict");
-var esp32camRouter = require("./routes/esp32cam");
-var tensorflowobjectdetectionRouter = require("./routes/tfod");
-var esp32smarthomeRouter = require("./routes/esp32smarthome");
-var usersRouter = require("./routes/users");
+// var indexRouter = require("./routes/index");
+// var predictRouter = require("./routes/predict");
+// var esp32camRouter = require("./routes/esp32cam");
+// var mobilecameraRouter = require("./routes/mobilecamera");
+// var tensorflowobjectdetectionRouter = require("./routes/tfod");
+// var esp32smarthomeRouter = require("./routes/esp32smarthome");
+// var usersRouter = require("./routes/users");
 const sqlite3 = require("sqlite3").verbose();
 var path = require("path");
 const sharp = require("sharp");
 const expressLayouts = require("express-ejs-layouts");
+
 const { env } = require("process");
+
 
 var app = express();
 var corsOptions = {
   origin: "*",
 };
+
+
 app.use(cors(corsOptions));
 app.use(express.json({ limit: "50mb" }));
+app.use(express.static('public'));
+
+const http = require('http').Server(app);
+const io = require('socket.io')(http);
+const socketio = require('./socketio'); // Import your socketio.js module
+socketio(io); // Initialize your socketio module
 
 const db = new sqlite3.Database("images.db");
 
@@ -58,7 +69,7 @@ app.get("/", (req, res) => {
 });
 
 app.get("/dashboard", (req, res) => {
-  res.render("dashboard", { title: "Dashboard" });
+  res.render("dashboard", { title: "Dashboard", esp32: process.env.ESP32IP });
 });
 
 app.get("/smarthome", (req, res) => {
@@ -80,9 +91,22 @@ app.get("/esp32cam", (req, res) => {
   });
 });
 
+app.get("/mobilecamera", (req, res) => {
+  res.render("mobilecamera", {
+    title: "Builtin Camera"
+  });
+});
+
 app.get("/tfobjectdetect", (req, res) => {
   res.render("tfobjectdetect", {
     title: "Object Detection using ESP32CAM",
+    esp32camip: process.env.ESP32CAMIP,
+  });
+});
+
+app.get("/hubotcontrol", (req, res) => {
+  res.render("hubotcontrol", {
+    title: "Hubot Control",
     esp32camip: process.env.ESP32CAMIP,
   });
 });
@@ -176,11 +200,15 @@ app.get("/predict-esp32cam", async (req, res) => {
       responseType: "arraybuffer",
     });
     if (response) {
-      console.log("image loaded");
+      const originalimageBuffer = await sharp(response.data).toBuffer();
+      const originalbase64 = await Buffer.from(originalimageBuffer).toString("base64");
+      const src = `data:image/jpeg;base64,${originalbase64}`;
+
+      
       const model = await tf.loadLayersModel("file://tfjs_model2/model.json");
       const imageBuffer = await sharp(response.data).resize(224).toBuffer();
       const base64 = await Buffer.from(imageBuffer).toString("base64");
-      const src = `data:image/jpeg;base64,${base64}`;
+      
 
       const image = tf.node.decodeImage(imageBuffer);
       const resizedImage = tf.image.resizeBilinear(image, [224, 224]);
@@ -228,6 +256,15 @@ app.use(function (err, req, res, next) {
   // render the error page
   res.status(err.status || 500);
   res.render("error");
+});
+
+
+// Set the port number
+const port = 3000;
+
+// Start the server
+http.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
 });
 
 module.exports = app;

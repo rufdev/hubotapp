@@ -66,6 +66,11 @@
 <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 <script>
   var socket = io();
+  
+  // socket.on('connect',function(){      
+  //       socket.emit('join','car');
+  //       socket.emit('tilt',90);
+  // });   
 
   const bedroom = document.getElementById("bedroom");
   const livingroom = document.getElementById("livingroom");
@@ -139,6 +144,48 @@
       // fetch("http://10.50.27.172/led4/off");
       socket.emit("bathroomstate", "off");
     }
+  });
+
+  socket.on("datareceived", function (message) {
+      if(message.led1){
+        bedroom.classList.remove("btn-primary");
+        bedroom.classList.add("btn-success");
+        bedroom.innerHTML = "Bedroom On";
+      } else{
+        bedroom.classList.add("btn-primary");
+        bedroom.classList.remove("btn-success");
+        bedroom.innerHTML = "Bedroom Off";
+      }
+
+      if(message.led2){
+        livingroom.classList.remove("btn-primary");
+        livingroom.classList.add("btn-success");
+        livingroom.innerHTML = "Living Room On";
+      } else{
+        livingroom.classList.add("btn-primary");
+        livingroom.classList.remove("btn-success");
+        livingroom.innerHTML = "Living Room Off";
+      }
+
+      if(message.led3){
+        kitchen.classList.remove("btn-primary");
+        kitchen.classList.add("btn-success");
+        kitchen.innerHTML = "Kitchen On";
+      } else{
+        kitchen.classList.add("btn-primary");
+        kitchen.classList.remove("btn-success");
+        kitchen.innerHTML = "Kitchen Off";
+      }
+
+      if(message.led4){
+        bathroom.classList.remove("btn-primary");
+        bathroom.classList.add("btn-success");
+        bathroom.innerHTML = "Bathroom On";
+      } else{
+        bathroom.classList.add("btn-primary");
+        bathroom.classList.remove("btn-success");
+        bathroom.innerHTML = "Bathroom Off";
+      }
   });
 
 </script>

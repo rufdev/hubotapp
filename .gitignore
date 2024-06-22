@@ -130,6 +130,9 @@ dist
 .pnp.*
 venv/
 model.h5
+model2.h5
 tfjs_model/
 dataset/
 bin/
+onlinedataset/
+tfjs_model2/
